@@ -5,12 +5,15 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.RectF
-import com.taleroangel.ratoniquest.render.Renderable
+import androidx.annotation.CallSuper
+import com.taleroangel.ratoniquest.render.events.Event
+import com.taleroangel.ratoniquest.render.events.EventGenerator
 import com.taleroangel.ratoniquest.tools.GeometricTools
 
-class Button(
-    position: GeometricTools.Position
-) : UIComponent(position, BUTTON_SIZE) {
+abstract class Button(
+    position: GeometricTools.Position,
+    val event: Event
+) : UIComponent(position, BUTTON_SIZE), EventGenerator {
 
     companion object {
         const val DEFAULT_PADDING = 60.0F
@@ -18,24 +21,13 @@ class Button(
         const val BORDER_RADIUS = 20.0F
     }
 
-    constructor(canvas: Canvas, padding: Float = DEFAULT_PADDING) : this(
-        GeometricTools.Position(
-            padding + BUTTON_SIZE,
-            canvas.height - padding - BUTTON_SIZE
-        )
-    )
-
+    @CallSuper
     override fun draw(canvas: Canvas) {
         // Draw outer box
         canvas.drawPath(
             Path().apply {
                 addRoundRect(
-                    RectF(
-                        position.x - BUTTON_SIZE,
-                        position.y + BUTTON_SIZE,
-                        position.x + BUTTON_SIZE,
-                        position.y - BUTTON_SIZE
-                    ),
+                    position.toRectF(BUTTON_SIZE),
                     floatArrayOf(
                         BORDER_RADIUS, BORDER_RADIUS,   // Top left radius in px
                         BORDER_RADIUS, BORDER_RADIUS,   // Top right radius in px
@@ -50,11 +42,7 @@ class Button(
                 // Change style
                 style = Paint.Style.FILL_AND_STROKE
             })
-
-        // Draw icon
-        canvas.drawCircle(position.x, position.y, BORDER_RADIUS, Paint().apply {
-            color = Color.RED
-            style = Paint.Style.FILL_AND_STROKE
-        })
     }
+
+    override fun post(): Event = event
 }

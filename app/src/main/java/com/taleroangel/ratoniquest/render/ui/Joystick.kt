@@ -16,6 +16,10 @@ class Joystick(position: GeometricTools.Position) :
         const val DEFAULT_PADDING = 100F
     }
 
+    /**
+     * Create Joystick at the bottom-right corner of the screen
+     * Requires a [Canvas] to identify the screen constraints
+     */
     constructor(canvas: Canvas, padding: Float = DEFAULT_PADDING) : this(
         GeometricTools.Position(
             canvas.width - padding - OUTER_RADIUS, canvas.height - padding - OUTER_RADIUS
@@ -27,14 +31,9 @@ class Joystick(position: GeometricTools.Position) :
     /**
      * Return direction from -1 to 1 in a pair of coordinates <x, y>
      */
-    fun calculateDirection(): Triple<Float, Float, Float> {
-        val pairs = GeometricTools.deltaComponentDistance(position, innerCircle)
-        return Triple(
-            (pairs.first / areaRadius),
-            (pairs.second / areaRadius),
-            atan(pairs.second / pairs.first)
-        )
-    }
+    fun calculateDirection(): Triple<Float, Float, Float> =
+        GeometricTools.findComponents(position, innerCircle, areaRadius)
+
 
     /**
      * Calculate and set inner actuator position

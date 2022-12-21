@@ -16,5 +16,4 @@ abstract class UIComponent(
     override fun update(): Nothing {
         throw java.lang.IllegalArgumentException("Update should not be called from an UI element")
     }
-
 }

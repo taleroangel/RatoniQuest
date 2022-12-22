@@ -1,7 +1,5 @@
 package com.taleroangel.ratoniquest.render.game
 
-import android.graphics.Canvas
-import com.taleroangel.ratoniquest.render.events.Event
 import com.taleroangel.ratoniquest.render.sprites.SpriteSheet
 import com.taleroangel.ratoniquest.tools.GeometricTools
 
@@ -17,7 +15,7 @@ abstract class Mascot(
     velocity: Float = 0.0F,
     private val follow: Player,
     val minFollowDistanceOffset: Float = 0.0F,
-    collisionType: CollisionType = CollisionType.SMALL_MASS
+    collisionType: CollisionType = CollisionType.LIGHT
 ) : Player(tag, spriteSheet, areaRadius, position, direction, velocity, collisionType) {
 
     override fun update() {
@@ -27,7 +25,7 @@ abstract class Mascot(
         // If no distance detected
         if (distance == 0F) return
         // Follow minimum distance
-        else if (distance < (spriteSheet.spriteSize + follow.spriteSheet.spriteSize + minFollowDistanceOffset)) {
+        else if (distance < (spriteSheet.renderSize + follow.spriteSheet.renderSize + minFollowDistanceOffset)) {
             direction = GeometricTools.Direction.NONE
             return
         }

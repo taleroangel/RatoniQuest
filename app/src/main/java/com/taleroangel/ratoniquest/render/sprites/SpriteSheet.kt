@@ -4,18 +4,23 @@ import android.content.Context
 import android.graphics.*
 import com.taleroangel.ratoniquest.tools.GeometricTools
 
+/**
+ * An animated sprite that repeats itself indefinitely
+ *
+ * @param context Context from which the resources will be grabbed
+ * @param resource Resource ID for the sprite
+ * @param renderSize Size in which the sprite will be rendered
+ * @param bitmapSize Size of the bitmap sprite
+ * @param stages How many (Horizontal) stages does the sprite bitmap has
+ * @param drawsPerStage How many draws will be made per stage (inversely alters animation speed)
+ */
 class SpriteSheet(
-    /** Build context */
     context: Context,
-    /** R. resource id */
     resource: Int,
-    /** Size to render the sprite */
-    var spriteSize: Float,
-    /** Bitmap size */
+    var renderSize: Float,
     var bitmapSize: Int = 50,
-    /** Stages in the bitmap */
     var stages: Int = 3,
-    var maxDrawPerStage: Int = 15
+    var drawsPerStage: Int = 15
 ) {
 
     var currentStage: Int = 0
@@ -37,11 +42,11 @@ class SpriteSheet(
                 (bitmapSize * currentStage),
                 (bitmapSize * (direction.index + 1)),
                 (bitmapSize * (currentStage + 1)),
-            ), position.toRectF(spriteSize), null
+            ), position.toRectF(renderSize), null
         )
 
         drawCounter++
-        if (drawCounter >= maxDrawPerStage) {
+        if (drawCounter >= drawsPerStage) {
             drawCounter = 0 // Restart the counter
             currentStage = (currentStage + 1) % stages // Move the stage
         }

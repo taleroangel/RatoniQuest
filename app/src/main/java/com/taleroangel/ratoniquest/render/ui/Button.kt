@@ -3,8 +3,8 @@ package com.taleroangel.ratoniquest.render.ui
 import android.content.Context
 import android.graphics.*
 import androidx.annotation.CallSuper
-import com.taleroangel.ratoniquest.render.events.Event
-import com.taleroangel.ratoniquest.render.events.EventGenerator
+import com.taleroangel.ratoniquest.engine.interactions.events.Event
+import com.taleroangel.ratoniquest.engine.interactions.events.EventGenerator
 import com.taleroangel.ratoniquest.tools.GeometricTools
 
 class Button(
@@ -50,5 +50,5 @@ class Button(
         canvas.drawBitmap(bitmap, null, position.toRectF(DEFAULT_PADDING), null)
     }
 
-    override fun post(): Event = event
+    override fun postEvent(): Event = event
 }

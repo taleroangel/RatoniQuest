@@ -9,8 +9,11 @@ import android.view.MotionEvent
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 import com.taleroangel.ratoniquest.R
-import com.taleroangel.ratoniquest.render.events.Event
-import com.taleroangel.ratoniquest.render.events.EventDialog
+import com.taleroangel.ratoniquest.engine.graphics.RenderEngine
+import com.taleroangel.ratoniquest.engine.interactions.InteractionsEngine
+import com.taleroangel.ratoniquest.engine.physics.PhysicsEngine
+import com.taleroangel.ratoniquest.engine.interactions.events.Event
+import com.taleroangel.ratoniquest.render.ui.Dialog
 import com.taleroangel.ratoniquest.render.ui.Button
 import com.taleroangel.ratoniquest.render.ui.Joystick
 import com.taleroangel.ratoniquest.render.game.Mascot
@@ -21,21 +24,19 @@ import kotlin.properties.Delegates
 
 class GameEngine(context: Context) : SurfaceView(context), SurfaceHolder.Callback {
 
-    /* Game engine variables */
-    var isInitialized = false
-        private set
-
     /* Initialize the subsystems */
-    private var gameLoop = GameLoopController(this, holder)
+    private var renderEngine = RenderEngine(this, holder)
     private var physicsEngine = PhysicsEngine()
+    private var interactionsEngine = InteractionsEngine()
 
-    /* Game components */
+    /* UI components that depend on the Canvas constraints */
     private lateinit var joystick: Joystick
     private lateinit var kissButton: Button
 
-    /* Canvas constraints */
-    var maxHeight: Int by Delegates.notNull()
-    var maxWidth: Int by Delegates.notNull()
+    /* Canvas constraints (late init) */
+    private var maxHeight: Int by Delegates.notNull()
+    private var maxWidth: Int by Delegates.notNull()
+    private var isInitialized = false
 
     /* Player */
     private val player = object : Player(
@@ -45,13 +46,13 @@ class GameEngine(context: Context) : SurfaceView(context), SurfaceHolder.Callbac
         position = GeometricTools.Position(500F, 500F),
         velocity = 10.0F,
     ) {
-        var dialog: EventDialog? = null
+        /* Dialog to show */
+        var dialog: Dialog? = null
 
         /* Overridden member functions */
-
         override fun draw(canvas: Canvas) {
-            super.draw(canvas)
-            dialog?.draw(canvas, position)
+            super.draw(canvas) // Draw the player
+            dialog?.draw(canvas, position) // Draw the dialog
         }
 
         override fun update() {
@@ -79,14 +80,15 @@ class GameEngine(context: Context) : SurfaceView(context), SurfaceHolder.Callbac
             }
         }
 
-        override fun consume(event: Event) {
+        /* When an event arrives */
+        override fun consumeEvent(event: Event) {
             when (event.generatorClass) {
                 // Kiss button
                 Button::class -> if (event.generatorTag == "button::kiss") {
-                    dialog = EventDialog(
+                    dialog = Dialog(
                         uptime = 2500,
                         offset = GeometricTools.Position(areaRadius + 20F, -areaRadius - 20F),
-                        foregroundPositionOffset = GeometricTools.Position(5F, -25F),
+                        foregroundOffset = GeometricTools.Position(5F, -25F),
                         context = context,
                         backgroundResource = R.drawable.progressive_dialog,
                         foregroundResource = R.drawable.asset_kissbutton,
@@ -107,7 +109,7 @@ class GameEngine(context: Context) : SurfaceView(context), SurfaceHolder.Callbac
         follow = player,
         minFollowDistanceOffset = 40.0F
     ) {
-        override fun consume(event: Event) {
+        override fun consumeEvent(event: Event) {
             /* No consumer for this mascot */
             throw java.lang.IllegalStateException("No consumer for this mascot")
         }
@@ -120,10 +122,16 @@ class GameEngine(context: Context) : SurfaceView(context), SurfaceHolder.Callbac
 
     override fun surfaceCreated(holder: SurfaceHolder) {
         Log.d(this.javaClass.name, "GameView surface created")
-        gameLoop = GameLoopController(this, holder)
-        gameLoop.start()
+
+        // Create engines
+        renderEngine = RenderEngine(this, holder)
         physicsEngine = PhysicsEngine()
+        interactionsEngine = InteractionsEngine()
+
+        // Start engines
+        renderEngine.start()
         physicsEngine.start()
+        interactionsEngine.start()
     }
 
     override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
@@ -131,10 +139,18 @@ class GameEngine(context: Context) : SurfaceView(context), SurfaceHolder.Callbac
 
     override fun surfaceDestroyed(holder: SurfaceHolder) {
         Log.d(this.javaClass.name, "GameView Surface destroyed")
-        gameLoop.interrupt()
+
+        // Interrupt subsystems
+        renderEngine.interrupt()
         physicsEngine.interrupt()
-        gameLoop.join()
+        interactionsEngine.interrupt()
+
+        // Join them
+        renderEngine.join()
         physicsEngine.join()
+        interactionsEngine.join()
+
+        // Mark as uninitialized
         isInitialized = false
     }
 
@@ -156,11 +172,17 @@ class GameEngine(context: Context) : SurfaceView(context), SurfaceHolder.Callbac
         maxHeight = canvas.height
         maxWidth = canvas.width
 
-        // Initialize subscriber events
-        gameLoop.registerConsumer(player)
+        // Initialize all interactions
+        with(interactionsEngine) {
+            registerEventConsumer(player)
+            register(player)
+        }
 
         // Initialize physics engine
-        physicsEngine.collisionListeners.addAll(listOf(player, mascot))
+        with(physicsEngine) {
+            register(player)
+            register(mascot)
+        }
 
         // Initialization
         isInitialized = true
@@ -186,10 +208,16 @@ class GameEngine(context: Context) : SurfaceView(context), SurfaceHolder.Callbac
         drawInformationOverlay(canvas)
     }
 
+    /**
+     * Listen for touch events
+     */
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent?): Boolean {
         if (event != null) {
+            // Calculate the touch position
             val touchPos = GeometricTools.Position(event.x, event.y)
+
+            // Handle touch type
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
                     joystick.pressed = joystick.checkPressed(touchPos)
@@ -210,7 +238,7 @@ class GameEngine(context: Context) : SurfaceView(context), SurfaceHolder.Callbac
                     }
                     // KissButton
                     if (kissButton.pressed) {
-                        gameLoop.publish(kissButton.post()) // Post an event is button was pressed
+                        interactionsEngine.publish(kissButton.postEvent()) // Post an event is button was pressed
                         kissButton.pressed = false // Kiss button was un pressed
                     }
                     return true
@@ -223,7 +251,7 @@ class GameEngine(context: Context) : SurfaceView(context), SurfaceHolder.Callbac
     }
 
     /**
-     * Render FPS counter in the top corner
+     * Render FPS counter and other useful DEBUG information
      */
     private fun drawInformationOverlay(canvas: Canvas) {
         val paint = Paint().apply {
@@ -232,8 +260,9 @@ class GameEngine(context: Context) : SurfaceView(context), SurfaceHolder.Callbac
         }
 
         // Draw into the canvas
-        canvas.drawText(gameLoop.toString(), 0F, 50F, paint)
+        canvas.drawText(renderEngine.toString(), 0F, 50F, paint)
         canvas.drawText(physicsEngine.toString(), 0F, 100F, paint)
+        canvas.drawText(interactionsEngine.toString(), 0F, 150F, paint)
         canvas.drawText(player.toString(), 300F, canvas.height - 50F, paint)
         canvas.drawText(joystick.toString(), 300F, canvas.height - 100F, paint)
     }

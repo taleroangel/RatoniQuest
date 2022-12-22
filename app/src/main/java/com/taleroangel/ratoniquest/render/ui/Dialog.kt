@@ -1,4 +1,4 @@
-package com.taleroangel.ratoniquest.render.events
+package com.taleroangel.ratoniquest.render.ui
 
 import android.content.Context
 import android.graphics.Bitmap
@@ -7,40 +7,53 @@ import android.graphics.Canvas
 import com.taleroangel.ratoniquest.render.sprites.ProgressiveSprite
 import com.taleroangel.ratoniquest.tools.GeometricTools
 
-class EventDialog(
-    /**/
+/**
+ * Show a Dialog above an object, it will follow it's position
+ * It has a background sprite as well as a foreground sprite
+ *
+ * @param uptime How many ms will the [Dialog] be visible once completely rendered
+ * @param offset Offset coordinates from the [draw] position
+ * @param foregroundOffset  Offset coordinates for the foreground sprite, offset is applied to the [Dialog.offset]
+ * @param context Context from which to grab the sprites
+ * @param backgroundResource Background sprite resource ID (Must be a [ProgressiveSprite])
+ * @param foregroundResource Foreground asset resource ID (No animation, single texture)
+ * @param renderSize Size in which to render the dialog
+ * @param foregroundSize Size in which to render the foreground
+ * @param bitmapSize Size of the background bitmap sprite
+ * @param stages Animation stages of the background sprite
+ * @param drawsPerStage How many draws will be made per stage (inversely alters animation speed)
+ */
+class Dialog(
     val uptime: Long,
     val offset: GeometricTools.Position,
-    val foregroundPositionOffset: GeometricTools.Position,
-    /** Build context */
+    val foregroundOffset: GeometricTools.Position,
     context: Context,
-    /** R. resource id */
     backgroundResource: Int,
     foregroundResource: Int,
-    /** Size to render the sprite */
-    spriteSize: Float,
-    val foregroundSize: Float = 35F,
-    /** Bitmap size */
+    renderSize: Float,
+    val foregroundSize: Float,
     bitmapSize: Int = 50,
-    /** Stages in the bitmap */
     stages: Int = 3,
-    maxDrawPerStage: Int = 10
+    drawsPerStage: Int = 10
 ) : ProgressiveSprite(
     context,
     backgroundResource,
-    spriteSize,
+    renderSize,
     bitmapSize,
     stages,
-    maxDrawPerStage
+    drawsPerStage
 ) {
-    var needsDrawing = true
-    var timeCounter: Long? = null
+    private var needsDrawing = true
+    private var timeCounter: Long? = null
 
-    val foregroundBitmap: Bitmap = BitmapFactory.decodeResource(
+    private val foregroundBitmap: Bitmap = BitmapFactory.decodeResource(
         context.resources,
         foregroundResource,
         BitmapFactory.Options().apply { inScaled = false })
 
+    /**
+     * Draw the dialog once, it will disappear when [uptime] (ms) passes
+     */
     override fun draw(canvas: Canvas, position: GeometricTools.Position) {
         if (needsDrawing) {
             // Calculate position
@@ -56,8 +69,8 @@ class EventDialog(
                     foregroundBitmap,
                     null,
                     GeometricTools.Position(
-                        followPosition.x + foregroundPositionOffset.x,
-                        followPosition.y + foregroundPositionOffset.y
+                        followPosition.x + foregroundOffset.x,
+                        followPosition.y + foregroundOffset.y
                     ).toRectF(foregroundSize),
                     null
                 )

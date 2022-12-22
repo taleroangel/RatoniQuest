@@ -1,6 +1,6 @@
 package com.taleroangel.ratoniquest.render.ui
 
-import com.taleroangel.ratoniquest.render.Renderable
+import com.taleroangel.ratoniquest.engine.graphics.Renderable
 import com.taleroangel.ratoniquest.tools.GeometricTools
 
 abstract class UIComponent(

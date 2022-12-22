@@ -3,9 +3,7 @@ package com.taleroangel.ratoniquest.render.ui
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
-import com.taleroangel.ratoniquest.render.Renderable
 import com.taleroangel.ratoniquest.tools.GeometricTools
-import kotlin.math.atan
 
 class Joystick(position: GeometricTools.Position) :
     UIComponent(position, OUTER_RADIUS) {
@@ -19,6 +17,9 @@ class Joystick(position: GeometricTools.Position) :
     /**
      * Create Joystick at the bottom-right corner of the screen
      * Requires a [Canvas] to identify the screen constraints
+     *
+     * @param canvas From which to obtain constraints
+     * @param padding from the corner
      */
     constructor(canvas: Canvas, padding: Float = DEFAULT_PADDING) : this(
         GeometricTools.Position(

@@ -1,25 +1,35 @@
-package com.taleroangel.ratoniquest.engine
+package com.taleroangel.ratoniquest.engine.physics
 
 import com.taleroangel.ratoniquest.tools.GeometricTools
 
+/**
+ * Physics and Collision detection in a Thread
+ * Every object that wants to react to collisions must [register] itself
+ */
 class PhysicsEngine : Thread() {
-    val collisionListeners: MutableList<PhysicsObject> = ArrayList()
+    private val listeners: MutableList<PhysicsObject> = ArrayList()
 
-    var collisionsHandled: Long = 0
-        private set
+    /**
+     * Register a new [PhysicsObject], physics engine will then be able to modify it's behaviour
+     */
+    fun register(physicsObject: PhysicsObject) {
+        listeners.add(physicsObject)
+    }
+
+    private var nCollisions: Long = 0
 
     fun detectCollisions() {
-        for (item in collisionListeners) {
-            for (other in collisionListeners) {
+        for (item in listeners) {
+            for (other in listeners) {
                 if (item !== other && GeometricTools.isColliding(
                         item.getConstraints(), other.getConstraints()
                     )
                 ) {
-                    collisionsHandled++
+                    nCollisions++
                     when (item.collisionType) {
-                        PhysicsObject.CollisionType.SMALL_MASS -> item.onCollision(other.getConstraints())
+                        PhysicsObject.CollisionType.LIGHT -> item.onCollision(other.getConstraints())
                         PhysicsObject.CollisionType.SOLID -> other.onCollision(item.getConstraints())
-                        PhysicsObject.CollisionType.BIG_MASS -> if (
+                        PhysicsObject.CollisionType.HEAVY -> if (
                             other.collisionType != PhysicsObject.CollisionType.SOLID &&
                             other.collisionType != PhysicsObject.CollisionType.NONE
                         )
@@ -41,5 +51,5 @@ class PhysicsEngine : Thread() {
     }
 
     override fun toString() =
-        String.format("PhysicsEngine(collisionsHandled=%d)", collisionsHandled)
+        String.format("PhysicsEngine(collisionsHandled=%d)", nCollisions)
 }

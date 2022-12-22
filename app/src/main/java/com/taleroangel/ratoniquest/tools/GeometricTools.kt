@@ -1,7 +1,7 @@
 package com.taleroangel.ratoniquest.tools
 
 import android.graphics.RectF
-import com.taleroangel.ratoniquest.engine.PhysicsObject
+import com.taleroangel.ratoniquest.engine.physics.PhysicsObject
 import kotlin.math.*
 
 object GeometricTools {

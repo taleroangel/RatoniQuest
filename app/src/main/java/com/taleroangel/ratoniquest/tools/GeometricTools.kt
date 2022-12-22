@@ -19,10 +19,16 @@ object GeometricTools {
             )
     }
 
-    enum class Direction {
-        NW, N, NE,
-        W, NONE, E,
-        SW, S, SE
+    enum class Direction(val index: Int) {
+        NONE(0),
+        N(1),
+        NE(2),
+        E(3),
+        SE(4),
+        S(5),
+        SW(6),
+        W(7),
+        NW(8)
     }
 
     fun deltaComponentDistance(from: Position, to: Position) =

@@ -5,18 +5,29 @@ import android.util.Log
 import android.view.SurfaceHolder
 import com.taleroangel.ratoniquest.render.events.Event
 import com.taleroangel.ratoniquest.render.events.EventConsumer
+import com.taleroangel.ratoniquest.render.events.EventHandler
 import java.util.Queue
 
 class GameLoopController(
     private val gameView: GameEngine, private val surfaceHolder: SurfaceHolder
-) : Thread() {
+) : Thread(), EventHandler {
 
     /** Average FPS Counter */
+    var eventCount = 0
+        private set
     var averageFPS = 0.0
         private set
 
-    val eventQueue: Queue<Event> = java.util.ArrayDeque()
-    val eventListeners: MutableList<EventConsumer> = ArrayList();
+    private val eventQueue: Queue<Event> = java.util.ArrayDeque()
+    private val eventListeners: MutableList<EventConsumer> = ArrayList();
+
+    override fun publish(event: Event) {
+        eventQueue.add(event)
+    }
+
+    override fun registerConsumer(eventConsumer: EventConsumer) {
+        eventListeners.add(eventConsumer)
+    }
 
     override fun run() {
         super.run()
@@ -41,6 +52,7 @@ class GameLoopController(
                             event
                         )
                     }
+                    eventCount++
                 }
 
                 //1. Rendering stage
@@ -78,5 +90,6 @@ class GameLoopController(
         }
     }
 
-    override fun toString(): String = String.format("GameEngine[Loop](FPS=%.1f)", averageFPS)
+    override fun toString(): String =
+        String.format("GameEngine[Loop](FPS=%.1f, eventsHandled=%d)", averageFPS, eventCount)
 }

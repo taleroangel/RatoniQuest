@@ -10,4 +10,5 @@ abstract class Drawable(
     position: GeometricTools.Position,
     direction: GeometricTools.Direction = GeometricTools.Direction.NONE,
     velocity: Float = 0.0F,
-) : Renderable, PhysicsObject(areaRadius, position, direction, velocity) {}
+    collisionType: CollisionType = CollisionType.NONE
+) : Renderable, PhysicsObject(areaRadius, position, direction, velocity, collisionType) {}

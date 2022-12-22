@@ -6,5 +6,6 @@ data class Event(
     val generatorClass: KClass<out EventGenerator>,
     val generatorTag: String? = null,
     val targetClass: KClass<out EventConsumer>,
-    val targetTag: String? = null
+    val targetTag: String? = null,
+    val info: Any? = null,
 )

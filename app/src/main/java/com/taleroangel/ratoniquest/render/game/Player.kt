@@ -1,5 +1,6 @@
 package com.taleroangel.ratoniquest.render.game
 
+import android.graphics.Canvas
 import com.taleroangel.ratoniquest.render.Drawable
 import com.taleroangel.ratoniquest.render.events.EventConsumer
 import com.taleroangel.ratoniquest.render.sprites.SpriteSheet
@@ -12,13 +13,17 @@ abstract class Player(
     position: GeometricTools.Position,
     direction: GeometricTools.Direction = GeometricTools.Direction.NONE,
     velocity: Float = 0.0F,
-) : Drawable(spriteSheet, areaRadius, position, direction, velocity), EventConsumer {
+    collisionType: CollisionType = CollisionType.BIG_MASS
+) : Drawable(spriteSheet, areaRadius, position, direction, velocity, collisionType), EventConsumer {
 
     override fun onCollision(other: CircularConstraints) {
-        // Player pushes things around
-        if (tag != "player::main") position = GeometricTools.collisionPushBack(
+        position = GeometricTools.collisionPushBack(
             getConstraints(), other
         )
+    }
+
+    override fun draw(canvas: Canvas) {
+        spriteSheet.draw(canvas, position, direction)
     }
 
     override fun toString() =

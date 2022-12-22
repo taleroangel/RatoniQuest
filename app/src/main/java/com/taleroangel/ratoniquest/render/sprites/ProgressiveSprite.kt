@@ -1,10 +1,13 @@
 package com.taleroangel.ratoniquest.render.sprites
 
 import android.content.Context
-import android.graphics.*
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.Rect
 import com.taleroangel.ratoniquest.tools.GeometricTools
 
-class SpriteSheet(
+open class ProgressiveSprite(
     /** Build context */
     context: Context,
     /** R. resource id */
@@ -17,7 +20,6 @@ class SpriteSheet(
     var stages: Int = 3,
     var maxDrawPerStage: Int = 15
 ) {
-
     var currentStage: Int = 0
     var drawCounter: Int = 0
 
@@ -26,24 +28,25 @@ class SpriteSheet(
         resource,
         BitmapFactory.Options().apply { inScaled = false })
 
-    fun draw(
+    open fun draw(
         canvas: Canvas,
-        position: GeometricTools.Position,
-        direction: GeometricTools.Direction
+        position: GeometricTools.Position
     ) {
         canvas.drawBitmap(
             bitmap, Rect(
-                (bitmapSize * direction.index),
-                (bitmapSize * currentStage),
-                (bitmapSize * (direction.index + 1)),
-                (bitmapSize * (currentStage + 1)),
+                currentStage * bitmapSize,
+                0,
+                (currentStage + 1) * bitmapSize,
+                bitmapSize,
             ), position.toRectF(spriteSize), null
         )
 
-        drawCounter++
-        if (drawCounter >= maxDrawPerStage) {
-            drawCounter = 0 // Restart the counter
-            currentStage = (currentStage + 1) % stages // Move the stage
+        if (currentStage < (stages - 1)) {
+            drawCounter++
+            if (drawCounter >= maxDrawPerStage) {
+                drawCounter = 0 // Restart the counter
+                currentStage++
+            }
         }
     }
 }

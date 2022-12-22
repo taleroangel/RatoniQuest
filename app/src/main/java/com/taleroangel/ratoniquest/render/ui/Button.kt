@@ -1,19 +1,23 @@
 package com.taleroangel.ratoniquest.render.ui
 
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Paint
-import android.graphics.Path
-import android.graphics.RectF
+import android.content.Context
+import android.graphics.*
 import androidx.annotation.CallSuper
 import com.taleroangel.ratoniquest.render.events.Event
 import com.taleroangel.ratoniquest.render.events.EventGenerator
 import com.taleroangel.ratoniquest.tools.GeometricTools
 
-abstract class Button(
+class Button(
+    context: Context,
+    resource: Int,
     position: GeometricTools.Position,
     val event: Event
 ) : UIComponent(position, BUTTON_SIZE), EventGenerator {
+
+    val bitmap: Bitmap = BitmapFactory.decodeResource(
+        context.resources,
+        resource,
+        BitmapFactory.Options().apply { inScaled = false })
 
     companion object {
         const val DEFAULT_PADDING = 60.0F
@@ -21,7 +25,6 @@ abstract class Button(
         const val BORDER_RADIUS = 20.0F
     }
 
-    @CallSuper
     override fun draw(canvas: Canvas) {
         // Draw outer box
         canvas.drawPath(
@@ -42,6 +45,9 @@ abstract class Button(
                 // Change style
                 style = Paint.Style.FILL_AND_STROKE
             })
+
+        // Draw the resource
+        canvas.drawBitmap(bitmap, null, position.toRectF(DEFAULT_PADDING), null)
     }
 
     override fun post(): Event = event

@@ -68,13 +68,13 @@ class Joystick(position: GeometricTools.Position) :
     override fun draw(canvas: Canvas) {
         // Draw outer circle
         canvas.drawCircle(position.x, position.y, OUTER_RADIUS, Paint().apply {
-            color = Color.argb(0.65F, 1F, 1F, 1F)
+            color = Color.argb(0.75F, 1F, 1F, 1F)
             style = Paint.Style.FILL_AND_STROKE
         })
 
         // Draw inner circle
         canvas.drawCircle(innerCircle.x, innerCircle.y, INNER_RADIUS, Paint().apply {
-            color = Color.BLUE
+            color = Color.parseColor("#d61010")
             style = Paint.Style.FILL_AND_STROKE
         })
     }

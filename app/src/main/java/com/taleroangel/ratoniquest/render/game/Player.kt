@@ -15,7 +15,6 @@ abstract class Player(
     velocity: Float = 0.0F,
     collisionType: CollisionType = CollisionType.HEAVY
 ) : Drawable(spriteSheet, areaRadius, position, direction, velocity, collisionType), EventConsumer {
-
     override fun draw(canvas: Canvas) {
         spriteSheet.draw(canvas, position, direction)
     }

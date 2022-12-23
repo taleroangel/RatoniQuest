@@ -45,6 +45,7 @@ class Dialog(
 ) {
     private var needsDrawing = true
     private var timeCounter: Long? = null
+    var onCompletion: (() -> Unit)? = null
 
     private val foregroundBitmap: Bitmap = BitmapFactory.decodeResource(
         context.resources,
@@ -74,6 +75,11 @@ class Dialog(
                     ).toRectF(foregroundSize),
                     null
                 )
+
+                if (onCompletion != null) {
+                    onCompletion!!.invoke()
+                    onCompletion = null
+                }
 
                 // Calculate time
                 if (timeCounter == null) {

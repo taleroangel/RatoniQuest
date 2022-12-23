@@ -13,12 +13,15 @@ import com.taleroangel.ratoniquest.engine.graphics.RenderEngine
 import com.taleroangel.ratoniquest.engine.interactions.InteractionsEngine
 import com.taleroangel.ratoniquest.engine.physics.PhysicsEngine
 import com.taleroangel.ratoniquest.engine.interactions.events.Event
+import com.taleroangel.ratoniquest.engine.interactions.events.EventGenerator
 import com.taleroangel.ratoniquest.render.ui.Dialog
 import com.taleroangel.ratoniquest.render.ui.Button
 import com.taleroangel.ratoniquest.render.ui.Joystick
 import com.taleroangel.ratoniquest.render.game.Mascot
+import com.taleroangel.ratoniquest.render.game.NPC
 import com.taleroangel.ratoniquest.render.game.Player
 import com.taleroangel.ratoniquest.render.sprites.SpriteSheet
+import com.taleroangel.ratoniquest.render.ui.Indicator
 import com.taleroangel.ratoniquest.tools.GeometricTools
 import kotlin.properties.Delegates
 
@@ -32,6 +35,7 @@ class GameEngine(context: Context) : SurfaceView(context), SurfaceHolder.Callbac
     /* UI components that depend on the Canvas constraints */
     private lateinit var joystick: Joystick
     private lateinit var kissButton: Button
+    private lateinit var kissIndicator: Indicator
 
     /* Canvas constraints (late init) */
     private var maxHeight: Int by Delegates.notNull()
@@ -48,6 +52,10 @@ class GameEngine(context: Context) : SurfaceView(context), SurfaceHolder.Callbac
     ) {
         /* Dialog to show */
         var dialog: Dialog? = null
+        val activationDistanceForNPC = 35F
+        val nearNPC: MutableMap<String, NPC> = HashMap()
+        var kissCount: Int = 0
+        val kissAddAmount = 5
 
         /* Overridden member functions */
         override fun draw(canvas: Canvas) {
@@ -78,6 +86,23 @@ class GameEngine(context: Context) : SurfaceView(context), SurfaceHolder.Callbac
             } else if (position.y < 0F) {
                 position.y = 0F
             }
+
+            // Check for NPCs
+            for (npc in interactionsEngine.request<NPC>()) {
+                // Check distance
+                GeometricTools.euclideanDistance(position, npc.position).let {
+                    when {
+                        (it <= (areaRadius + npc.areaRadius + activationDistanceForNPC)) -> {
+                            npc.inMotion = false
+                            nearNPC.put(npc.tag, npc)
+                        }
+                        else -> {
+                            npc.inMotion = true
+                            nearNPC.remove(npc.tag)
+                        }
+                    }
+                }
+            }
         }
 
         /* When an event arrives */
@@ -91,12 +116,21 @@ class GameEngine(context: Context) : SurfaceView(context), SurfaceHolder.Callbac
                         foregroundOffset = GeometricTools.Position(5F, -25F),
                         context = context,
                         backgroundResource = R.drawable.progressive_dialog,
-                        foregroundResource = R.drawable.asset_kissbutton,
-                        85F
-                    )
+                        foregroundResource = if (nearNPC.containsKey("npc::ratona")) R.drawable.asset_kissbutton else R.drawable.progressive_dialog,
+                        foregroundSize = 35F,
+                        renderSize = 85F
+                    ).apply {
+                        onCompletion = {
+                            kissCount += kissAddAmount
+                            kissIndicator.text = kissCount.toString()
+                        }
+                    }
                 }
             }
         }
+
+        override fun toString() =
+            String.format("%s(nearNPCs=%d, kiss=%d)", super.toString(), nearNPC.size, kissCount)
     }
 
     /* Mascot */
@@ -114,6 +148,14 @@ class GameEngine(context: Context) : SurfaceView(context), SurfaceHolder.Callbac
             throw java.lang.IllegalStateException("No consumer for this mascot")
         }
     }
+
+    /* Ratona NPC */
+    private val npc = object : NPC(
+        "npc::ratona",
+        SpriteSheet(context, R.drawable.sprite_debugsheet_0, 80F),
+        areaRadius = 80.0F,
+        position = GeometricTools.Position(1000F, 800F),
+    ) {}
 
     init {
         holder.addCallback(this)
@@ -159,6 +201,7 @@ class GameEngine(context: Context) : SurfaceView(context), SurfaceHolder.Callbac
 
         // Initialize UI elements if not already
         joystick = Joystick(canvas)
+        kissIndicator = Indicator(canvas, context, R.drawable.asset_kissbutton, 100F, 30F, "0")
         kissButton = Button(
             context, R.drawable.asset_kissbutton, GeometricTools.Position(
                 Button.DEFAULT_PADDING + Button.BUTTON_SIZE,
@@ -176,12 +219,14 @@ class GameEngine(context: Context) : SurfaceView(context), SurfaceHolder.Callbac
         with(interactionsEngine) {
             registerEventConsumer(player)
             register(player)
+            register(npc)
         }
 
         // Initialize physics engine
         with(physicsEngine) {
             register(player)
             register(mascot)
+            register(npc)
         }
 
         // Initialization
@@ -191,6 +236,7 @@ class GameEngine(context: Context) : SurfaceView(context), SurfaceHolder.Callbac
     fun update() {
         player.update()
         mascot.update()
+        npc.update()
     }
 
     override fun draw(canvas: Canvas) {
@@ -198,11 +244,13 @@ class GameEngine(context: Context) : SurfaceView(context), SurfaceHolder.Callbac
 
         // Draw elements to screen
         mascot.draw(canvas)
+        npc.draw(canvas)
         player.draw(canvas)
 
         // Draw UI
         kissButton.draw(canvas)
         joystick.draw(canvas)
+        kissIndicator.draw(canvas)
 
         // Draw the overlay
         drawInformationOverlay(canvas)
@@ -263,7 +311,10 @@ class GameEngine(context: Context) : SurfaceView(context), SurfaceHolder.Callbac
         canvas.drawText(renderEngine.toString(), 0F, 50F, paint)
         canvas.drawText(physicsEngine.toString(), 0F, 100F, paint)
         canvas.drawText(interactionsEngine.toString(), 0F, 150F, paint)
+
+        // Players
         canvas.drawText(player.toString(), 300F, canvas.height - 50F, paint)
         canvas.drawText(joystick.toString(), 300F, canvas.height - 100F, paint)
+        canvas.drawText(npc.toString(), 300F, canvas.height - 150F, paint)
     }
 }

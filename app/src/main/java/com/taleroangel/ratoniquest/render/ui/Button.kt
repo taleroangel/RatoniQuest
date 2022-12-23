@@ -2,7 +2,6 @@ package com.taleroangel.ratoniquest.render.ui
 
 import android.content.Context
 import android.graphics.*
-import androidx.annotation.CallSuper
 import com.taleroangel.ratoniquest.engine.interactions.events.Event
 import com.taleroangel.ratoniquest.engine.interactions.events.EventGenerator
 import com.taleroangel.ratoniquest.tools.GeometricTools

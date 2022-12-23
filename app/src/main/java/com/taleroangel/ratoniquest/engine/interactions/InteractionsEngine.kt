@@ -15,7 +15,7 @@ class InteractionsEngine : Thread(), EventHandler {
 
     private val eventQueue: Queue<Event> = ArrayDeque()
     private val eventListeners: MutableList<EventConsumer> = ArrayList()
-    private val interactions: MutableList<CanInteract> = ArrayList()
+    val interactions: MutableList<CanInteract> = ArrayList()
 
     /**
      * Register a [CanInteract] object into the [InteractionsEngine]
@@ -28,6 +28,10 @@ class InteractionsEngine : Thread(), EventHandler {
      * Request a [CanInteract] for interacting with it
      */
     fun request(tag: String): CanInteract? = interactions.find { it.tag == tag }
+
+    inline fun <reified T> request(): List<T> {
+        return interactions.filter { it is T }.map { it as T }.toList()
+    }
 
     /**
      * Publish an [Event] fot it to be delivered to every [EventConsumer] in the queue
@@ -50,7 +54,9 @@ class InteractionsEngine : Thread(), EventHandler {
             while (eventQueue.isNotEmpty()) {
                 val event = eventQueue.poll()!!
                 eventListeners.forEach { eventConsumer ->
-                    if ((event.targetTag == eventConsumer.tag) || ((event.targetTag != null) && (eventConsumer::class == event.targetClass))) eventConsumer.consumeEvent(
+                    if ((event.targetTag == eventConsumer.tag)
+                        || ((event.targetTag != null) && (eventConsumer::class == event.targetClass))
+                    ) eventConsumer.consumeEvent(
                         event
                     )
                 }
